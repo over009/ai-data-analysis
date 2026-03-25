@@ -2,6 +2,38 @@
 
 一个主动式智能数据助手，基于 React + Express 构建。不是"等你来问"的查询工具，而是"帮你盯着"的智能搭档——先告诉你该关注什么，再帮你深入挖掘。
 
+## 截图预览
+
+### 数据简报 — 打开即看异常
+
+<p align="center">
+  <img src="docs/screenshots/briefing-light.png" width="600" alt="数据简报 - 浅色模式" />
+</p>
+
+系统自动扫描全部 14 个指标，将异常结果嵌入 3 张业务域卡片。退款率 +20%、复购率 -9.4% 一目了然。
+
+### 查询卡片 — 核心交互单元
+
+<p align="center">
+  <img src="docs/screenshots/query-card.png" width="600" alt="查询卡片" />
+</p>
+
+点击指标或自然语言提问，生成查询卡片。卡片上直接切维度（按渠道/按SKU/按地区）、切时间（本周/上周/本月/上月）、看关联指标——所有操作原地刷新，不经 LLM。
+
+### 指标目录
+
+<p align="center">
+  <img src="docs/screenshots/metrics-catalog.png" width="400" alt="指标目录" />
+</p>
+
+14 个指标按业务域分组，每个指标附带口径说明，点击即可查询。
+
+### 深色模式
+
+<p align="center">
+  <img src="docs/screenshots/briefing-dark.png" width="600" alt="数据简报 - 深色模式" />
+</p>
+
 ## 核心理念：查询卡片，不是聊天
 
 传统数据对话机器人每次交互都要经过 LLM。本项目使用**查询卡片（Query Card）**作为核心交互单元：
