@@ -1,0 +1,244 @@
+intent_patterns:
+  - intent: distinct
+    description: 用户想要跨天/跨期去重计数
+    trigger_words:
+      - 去重
+      - 总共多少人
+      - 不重复
+      - 有多少不同的
+      - 独立用户数
+      - 去个重
+    examples:
+      - input: 这个月总共有多少人用了APP
+        call:
+          metric_id: dau
+          time_range: this_month
+          aggregation: distinct
+        reasoning: '"总共多少人"意味着跨天去重，不是每日DAU的趋势'
+
+      - input: 上周活跃用户去重看看
+        call:
+          metric_id: dau
+          time_range: last_week
+          aggregation: distinct
+        reasoning: '"去重"明确要求去重计数'
+
+      - input: 这个月DAU去重一下
+        call:
+          metric_id: dau
+          time_range: this_month
+          aggregation: distinct
+        reasoning: 用户说"去重"是因为之前看到的数是累加的，想要跨天去重
+
+      - input: 本月有多少台不同的设备在用
+        call:
+          metric_id: active_devices
+          time_range: this_month
+          aggregation: distinct
+        reasoning: '"多少台不同的"意味着设备去重'
+
+      - input: 上个月一共有多少独立用户
+        call:
+          metric_id: dau
+          time_range: last_month
+          aggregation: distinct
+        reasoning: '"独立用户"明确要求去重'
+
+  - intent: trend
+    description: 用户想看趋势走势变化
+    trigger_words:
+      - 怎么样
+      - 趋势
+      - 走势
+      - 变化
+      - 每天
+      - 按天看
+      - 每日
+    examples:
+      - input: 这个月日活怎么样
+        call:
+          metric_id: dau
+          time_range: this_month
+          aggregation: daily
+        reasoning: '"怎么样"暗示看整体走势，返回每日趋势'
+
+      - input: 上周销售额按天看看
+        call:
+          metric_id: gmv
+          time_range: last_week
+          aggregation: daily
+        reasoning: '"按天看"明确要求每日拆分'
+
+      - input: 最近新增用户变化如何
+        call:
+          metric_id: new_users
+          time_range: this_week
+          aggregation: daily
+        reasoning: '"变化如何"暗示看趋势'
+
+      - input: 耗材订单每天有多少
+        call:
+          metric_id: consumable_orders
+          time_range: this_week
+          aggregation: daily
+        reasoning: '"每天"明确要求按日拆分'
+
+      - input: 设备绑定趋势
+        call:
+          metric_id: device_bindings
+          time_range: this_month
+          aggregation: daily
+        reasoning: '"趋势"关键词'
+
+  - intent: average
+    description: 用户想看日均/平均值
+    trigger_words:
+      - 日均
+      - 平均
+      - 平均每天
+    examples:
+      - input: 上周日均DAU多少
+        call:
+          metric_id: dau
+          time_range: last_week
+          aggregation: average
+        reasoning: '"日均"明确要求平均值'
+
+      - input: 这个月平均每天卖多少钱
+        call:
+          metric_id: gmv
+          time_range: this_month
+          aggregation: average
+        reasoning: '"平均每天"要求日均值'
+
+      - input: 平均每天多少新用户
+        call:
+          metric_id: new_users
+          time_range: this_week
+          aggregation: average
+        reasoning: '"平均每天"要求日均'
+
+      - input: 上个月日均耗材订单
+        call:
+          metric_id: consumable_orders
+          time_range: last_month
+          aggregation: average
+        reasoning: '"日均"关键词'
+
+  - intent: total
+    description: 用户想看时段汇总求和
+    trigger_words:
+      - 总共多少钱
+      - 一共
+      - 总计
+      - 总销售额
+      - 总订单
+      - 多少钱
+      - 多少单
+    examples:
+      - input: 上周总共卖了多少钱
+        call:
+          metric_id: gmv
+          time_range: last_week
+          aggregation: total
+        reasoning: '"总共多少钱"要求时段求和'
+
+      - input: 这个月耗材一共多少单
+        call:
+          metric_id: consumable_orders
+          time_range: this_month
+          aggregation: total
+        reasoning: '"一共多少单"要求时段汇总'
+
+      - input: 上周退款金额
+        call:
+          metric_id: refund_amount
+          time_range: last_week
+          aggregation: total
+        reasoning: '"退款金额"默认看总额'
+
+      - input: 本月销售额多少
+        call:
+          metric_id: gmv
+          time_range: this_month
+          aggregation: total
+        reasoning: '"多少"对于金额类指标默认汇总'
+
+      - input: 这周新增了多少用户
+        call:
+          metric_id: new_users
+          time_range: this_week
+          aggregation: total
+        reasoning: '"新增了多少"要求时段汇总'
+
+  - intent: compare
+    description: 用户想做维度拆分或时间对比
+    trigger_words:
+      - 和上周比
+      - 环比
+      - 按渠道拆分
+      - 按SKU看
+      - 对比
+      - 拆分
+      - 按地区
+    examples:
+      - input: 按渠道拆分看看
+        call:
+          metric_id: _previous_
+          dimensions:
+            - channel
+        reasoning: 上下文衔接，对当前卡片的指标按渠道拆分
+
+      - input: 按SKU看看
+        call:
+          metric_id: _previous_
+          dimensions:
+            - sku
+        reasoning: 对当前卡片的指标按SKU拆分
+
+      - input: 按地区拆一下
+        call:
+          metric_id: _previous_
+          dimensions:
+            - region
+        reasoning: 对当前卡片的指标按地区拆分
+
+      - input: 看上个月的
+        call:
+          metric_id: _previous_
+          time_range: last_month
+        reasoning: 切换时间范围
+
+      - input: 和上周比呢
+        call:
+          metric_id: _previous_
+          time_range: last_week
+        reasoning: 切换到上周做对比
+
+  - intent: ambiguous
+    description: 意图不明确，需要主动确认
+    examples:
+      - input: 这个月DAU多少
+        action: clarify
+        options:
+          - label: 每日DAU趋势
+            call:
+              aggregation: daily
+          - label: 日均DAU
+            call:
+              aggregation: average
+          - label: 本月去重活跃用户数
+            call:
+              aggregation: distinct
+        reasoning: '"多少"不明确，DAU可能是任何一种聚合方式'
+
+      - input: 上周活跃设备数
+        action: clarify
+        options:
+          - label: 每日活跃设备趋势
+            call:
+              aggregation: daily
+          - label: 上周去重活跃设备总数
+            call:
+              aggregation: distinct
+        reasoning: 不清楚是要趋势还是汇总
