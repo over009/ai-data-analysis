@@ -10,7 +10,8 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "server": "tsx watch server/index.ts",
-    "dev:all": "npm run dev & npm run server"
+    "dev:all": "npm run dev & npm run server",
+    "start": "npx tsx server/index.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
