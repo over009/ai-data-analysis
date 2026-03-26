@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-dotenv.config({ path: '/workspaces/ai-data-chat/.env.local' });
+dotenv.config({ path: '.env.local' });
 
 import express from 'express';
 import cors from 'cors';

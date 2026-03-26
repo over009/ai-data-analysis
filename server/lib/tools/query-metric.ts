@@ -14,8 +14,7 @@ import {
 import { existsSync } from 'fs';
 
 // Use BigQueryAdapter when GCP credentials available, otherwise MockAdapter
-const USE_BIGQUERY = !!(process.env.GOOGLE_APPLICATION_CREDENTIALS
-  || existsSync('/workspaces/my-vault/doc/ai-data-analysis/ai-data-analysis-490609-176bbbf2bcc6.json'));
+const USE_BIGQUERY = !!process.env.GOOGLE_APPLICATION_CREDENTIALS;
 const adapter: DataSourceAdapter = USE_BIGQUERY ? new BigQueryAdapter() : new MockAdapter();
 console.log(`Data source: ${USE_BIGQUERY ? 'BigQuery' : 'Mock'}`);
 
