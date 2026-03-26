@@ -1,128 +1,155 @@
-# AI Data Analysis
+# AI 智能数据助手
 
-一个主动式智能数据助手，基于 React + Express 构建。不是"等你来问"的查询工具，而是"帮你盯着"的智能搭档——先告诉你该关注什么，再帮你深入挖掘。
+  运营团队每天要花 10 分钟翻各种后台，看数据有没有异常。发现异常想深挖，又要找人、等人、来回沟通。
 
-## 截图预览
+  这个工具换了个思路：**打开就告诉你哪里有问题，点一下就能往下挖。**
 
-### 数据简报 — 打开即看异常
+  <p align="center">
+    <img src="docs/screenshots/briefing-light.png" width="700" alt="数据简报" />
+  </p>
 
-<p align="center">
-  <img src="docs/screenshots/briefing-light.png" width="600" alt="数据简报 - 浅色模式" />
-</p>
+  ## 它做了什么
 
-系统自动扫描全部 14 个指标，将异常结果嵌入 3 张业务域卡片。退款率 +20%、复购率 -9.4% 一目了然。
+  ### 数据简报 — 打开就看
 
-### 查询卡片 — 核心交互单元
+  系统自动扫描 14 个业务指标，按「硬件销售 / APP / 耗材复购」三个业务域归类。有异常的直接标出来，没异常的一句话带过。
 
-<p align="center">
-  <img src="docs/screenshots/query-card.png" width="600" alt="查询卡片" />
-</p>
+  不需要提问，不需要选日期，打开就是结果。
 
-点击指标或自然语言提问，生成查询卡片。卡片上直接切维度（按渠道/按SKU/按地区）、切时间（本周/上周/本月/上月）、看关联指标——所有操作原地刷新，不经 LLM。
+  ### 查询卡片 — 点一下继续挖
 
-### 指标目录
+  看到异常想深挖？点击异常条目，展开一张查询卡片：
 
-<p align="center">
-  <img src="docs/screenshots/metrics-catalog.png" width="400" alt="指标目录" />
-</p>
+  <p align="center">
+    <img src="docs/screenshots/query-card.png" width="700" alt="查询卡片" />
+  </p>
 
-14 个指标按业务域分组，每个指标附带口径说明，点击即可查询。
+  卡片上可以：
+  - **切维度** — 按渠道 / 按 SKU / 按地区拆分
+  - **切时间** — 本周 / 上周 / 本月 / 上月
+  - **看关联** — 系统自动提示相关指标的变化
 
-### 深色模式
+  这些操作都在卡片内原地刷新，不会跳到新页面、也不会发起新对话。
 
-<p align="center">
-  <img src="docs/screenshots/briefing-dark.png" width="600" alt="数据简报 - 深色模式" />
-</p>
+  ### 自然语言 — 说一句也行
 
-## 核心理念：查询卡片，不是聊天
+  查询栏支持自然语言输入。简单查询（"上周销售额"）走关键词解析，秒出结果；复杂查询（"上周 Amazon 渠道垃圾袋退款率 vs 上月"）走
+  LLM 解析。
 
-传统数据对话机器人每次交互都要经过 LLM。本项目使用**查询卡片（Query Card）**作为核心交互单元：
+  <p align="center">
+    <img src="docs/screenshots/metrics-catalog.png" width="400" alt="指标目录" />
+  </p>
 
-- **80% 的交互**（切维度、切时间、看关联）走结构化 API，不经 LLM，响应 ~40ms
-- **20% 的交互**（自然语言查询、复杂分析）通过 LLM（Gemini）解析意图，响应 ~3s
-- 卡片原地刷新，不生成新的对话消息
+  ## 为什么不做成对话式？
 
-## 功能特性
+  大多数"AI 数据助手"是对话机器人：你问一句，它答一句，每次交互都过 LLM。
 
-- **数据简报** — 打开即自动扫描全部指标，异常一目了然
-- **自然语言查询** — 一句话提问，返回带图表的结构化卡片
-- **智能分流** — 简单查询走关键词解析器（秒出），模糊查询走 LLM
-- **拖拽排序** — 基于 @dnd-kit 自由拖动卡片
-- **置顶 & 对比** — 重要卡片置顶，多指标并排对比
-- **导出 PNG** — 一键截图分享给团队
-- **深色 / 浅色模式** — 完整主题支持
-- **可插拔数据源** — 内置 BigQuery 适配器，可通过 adapter 接口扩展 PostgreSQL / MySQL
+  但数据查询有个特点——**80% 的操作是在已知范围内切换**（换个维度、换个时间段、看看关联指标），只有 20% 需要 LLM 理解自然语言。
 
-## 系统架构
+  所以这个项目用**查询卡片**替代对话：
 
-```
-用户层          →  QueryCard, DomainCard, QueryBar, MetricsCatalog
-调度层          →  CardManager, BreadcrumbNav, QueryBuilder
-API 层          →  GET /api/briefing, POST /api/query, POST /api/parse
-能力层          →  IntentParser (LLM), MetricsRegistry (YAML), ValidationEngine
-数据层          →  DataSourceAdapter (Mock / BigQuery / ...)
-```
+  | | 对话模式 | 卡片模式 |
+  |---|---|---|
+  | 切维度 | 重新发一句话，等 LLM 响应 ~3s | 点按钮，走 API ~40ms |
+  | 切时间 | 同上 | 同上 |
+  | 上下文 | 对话历史 2-3k tokens | 卡片状态 ~200 tokens |
+  | 回看之前的结果 | 滚聊天记录 | 展开折叠的卡片 |
 
-UI Spec 以 JSON 描述，通过 [json-render](https://github.com/nicepkg/json-render) 渲染，LLM 可动态生成仪表盘布局。
+  **能不过 LLM 就不过 LLM。** 维度切换、关联提示、图表选型全走规则引擎，LLM 只负责自然语言解析和简报总结。
 
-## 快速开始
+  ## 其他功能
 
-**前置条件：** Node.js 18+
+  - **拖拽排序** — 卡片可自由拖动排列
+  - **置顶 & 对比** — 重要卡片置顶，多指标并排对比
+  - **导出 PNG** — 截图分享给团队
+  - **深色 / 浅色模式**
+  - **指标配置驱动** — 新增指标只改 YAML，前端自动更新
+  - **可插拔数据源** — 内置 BigQuery 适配器，可扩展 PostgreSQL / MySQL
 
-```bash
-# 安装依赖
-npm install
+  <p align="center">
+    <img src="docs/screenshots/briefing-dark.png" width="700" alt="深色模式" />
+  </p>
 
-# 复制环境变量（Gemini API Key 可选——没有也能用，走关键词解析器）
-cp .env.example .env.local
+  ## 快速开始
 
-# 同时启动前端 + 后端
-npm run dev:all
-```
+  **前置条件：** Node.js 18+
 
-- 前端：http://localhost:3000
-- 后端 API：http://localhost:3001
+  ```bash
+  # 安装依赖
+  npm install
 
-### 环境变量
+  # 复制环境变量（Gemini API Key 可选——没有也能用，走关键词解析器）
+  cp .env.example .env.local
 
-| 变量 | 必填 | 说明 |
-|------|------|------|
-| `GEMINI_API_KEY` | 否 | Gemini API Key，用于自然语言意图解析。不配置则回退到关键词解析器 |
-| `LLM_MODEL` | 否 | LLM 模型名称（默认 `gemini-2.5-flash`） |
-| `PORT` | 否 | 后端端口（默认 `3001`） |
-| `GOOGLE_APPLICATION_CREDENTIALS` | 否 | BigQuery 服务账号密钥路径。不配置则使用 Mock 数据 |
+  # 同时启动前端 + 后端
+  npm run dev:all
 
-## 技术栈
+  - 前端：http://localhost:3000
+  - 后端 API：http://localhost:3001
 
-| 层级 | 技术 |
-|------|------|
-| 前端框架 | React 19 + Vite + Tailwind CSS 4 |
-| 图表 | Recharts |
-| 动画 | Motion (Framer Motion) |
-| 拖拽 | @dnd-kit |
-| 导出 | html2canvas |
-| 后端 | Express + TypeScript |
-| LLM | Gemini（via @google/genai） |
-| 数据 | BigQuery / Mock adapter |
-| 指标配置 | YAML |
+  环境变量                                                                                                                     
+   
+  ┌────────────────────────────────┬──────┬──────────────────────────────────────────────────────────────────┐                 
+  │              变量              │ 必填 │                               说明                               │
+  ├────────────────────────────────┼──────┼──────────────────────────────────────────────────────────────────┤
+  │ GEMINI_API_KEY                 │ 否   │ Gemini API Key，用于自然语言意图解析。不配置则回退到关键词解析器 │
+  ├────────────────────────────────┼──────┼──────────────────────────────────────────────────────────────────┤
+  │ LLM_MODEL                      │ 否   │ LLM 模型名称（默认 gemini-2.5-flash）                            │                 
+  ├────────────────────────────────┼──────┼──────────────────────────────────────────────────────────────────┤                 
+  │ PORT                           │ 否   │ 后端端口（默认 3001）                                            │                 
+  ├────────────────────────────────┼──────┼──────────────────────────────────────────────────────────────────┤                 
+  │ GOOGLE_APPLICATION_CREDENTIALS │ 否   │ BigQuery 服务账号密钥路径。不配置则使用 Mock 数据                │
+  └────────────────────────────────┴──────┴──────────────────────────────────────────────────────────────────┘                 
+   
+  技术栈                                                                                                                       
+                                                                  
+  ┌──────────┬──────────────────────────────────┐
+  │   层级   │               技术               │
+  ├──────────┼──────────────────────────────────┤
+  │ 前端     │ React 19 + Vite + Tailwind CSS 4 │
+  ├──────────┼──────────────────────────────────┤
+  │ 图表     │ Recharts                         │                                                                              
+  ├──────────┼──────────────────────────────────┤
+  │ 动画     │ Motion (Framer Motion)           │                                                                              
+  ├──────────┼──────────────────────────────────┤                 
+  │ 拖拽     │ @dnd-kit                         │
+  ├──────────┼──────────────────────────────────┤                                                                              
+  │ 导出     │ html2canvas                      │
+  ├──────────┼──────────────────────────────────┤                                                                              
+  │ 后端     │ Express + TypeScript             │                 
+  ├──────────┼──────────────────────────────────┤
+  │ LLM      │ Gemini（via @google/genai）      │
+  ├──────────┼──────────────────────────────────┤                                                                              
+  │ 数据     │ BigQuery / Mock adapter          │
+  ├──────────┼──────────────────────────────────┤                                                                              
+  │ 指标配置 │ YAML                             │                 
+  └──────────┴──────────────────────────────────┘                                                                              
+                                                                  
+  系统架构
 
-## 项目结构
-
-```
-src/                          # 前端源码
-  components/                 # UI 组件
-  state/                      # 状态管理（card-manager, pins, breadcrumb）
-  lib/                        # API 客户端, json-render 注册表
-server/                       # 后端源码
-  routes/                     # API 路由（query, parse, briefing, generate-spec）
-  lib/
-    datasource/               # 数据适配器（mock, bigquery）
-    intent/                   # 自然语言解析器 + 关键词解析器
-    metrics/                  # 指标注册表（YAML 驱动）
-    prompts/                  # LLM Prompt 模板
-    tools/                    # 查询执行工具
-```
-
-## License
-
-MIT
+  用户层          →  QueryCard, DomainCard, QueryBar, MetricsCatalog
+  调度层          →  CardManager, BreadcrumbNav, QueryBuilder                                                                  
+  API 层          →  GET /api/briefing, POST /api/query, POST /api/parse                                                       
+  能力层          →  IntentParser (LLM), MetricsRegistry (YAML), ValidationEngine                                              
+  数据层          →  DataSourceAdapter (Mock / BigQuery / ...)                                                                 
+                                                                                                                               
+  UI Spec 以 JSON 描述，通过 json-render 渲染，LLM 可动态生成仪表盘布局。                                                      
+                                                                  
+  项目结构                                                                                                                     
+                                                                  
+  src/                          # 前端源码
+    components/                 # UI 组件                                                                                      
+    state/                      # 状态管理（card-manager, pins, breadcrumb）
+    lib/                        # API 客户端, json-render 注册表                                                               
+  server/                       # 后端源码                                                                                     
+    routes/                     # API 路由（query, parse, briefing, generate-spec）                                            
+    lib/                                                                                                                       
+      datasource/               # 数据适配器（mock, bigquery）                                                                 
+      intent/                   # 自然语言解析器 + 关键词解析器                                                                
+      metrics/                  # 指标注册表（YAML 驱动）
+      prompts/                  # LLM Prompt 模板                                                                              
+      tools/                    # 查询执行工具                    
+                                                                                                                               
+  License                                                                                                                      
+   
+  MIT                                       
